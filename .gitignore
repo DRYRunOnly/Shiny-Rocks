@@ -1,0 +1,33 @@
+# Ignore bundler config
+/.bundle
+
+# Ignore the default SQLite database
+/db/*.sqlite3
+/db/*.sqlite3-journal
+
+# Ignore all logfiles and tempfiles
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+
+# Ignore gem package
+*.gem
+
+# Ignore coverage reports
+/coverage/
+
+# Ignore yard docs
+/doc/
+/.yardoc
+/_yardoc/
+/rdoc/
+
+# Ignore RuboCop config
+.rubocop-https---*
+
+# Ignore OS/editor files
+.DS_Store
+.idea/
+.vscode/
+*.swp

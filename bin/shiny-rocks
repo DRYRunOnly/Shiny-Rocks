@@ -1,0 +1,58 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "shiny/rocks"
+require "optparse"
+
+options = {}
+parser = OptionParser.new do |o|
+  o.banner = "Usage: shiny-rocks [options] [command] [args]\n\nCommands:\n  hello                  print a friendly message\n  greet NAME             greet someone by name\n  info                   show environment and gem info"
+  o.on("-v", "--version", "Print version and exit") { options[:version] = true }
+  o.on("-h", "--help", "Show help and exit") { options[:help] = true }
+end
+
+begin
+  parser.order!(ARGV)
+rescue OptionParser::InvalidOption => e
+  warn e.message
+  puts parser
+  exit 1
+end
+
+if options[:help]
+  puts parser
+  exit 0
+end
+
+if options[:version]
+  puts Shiny::Rocks::VERSION
+  exit 0
+end
+
+cmd = ARGV.shift
+
+case cmd
+when "hello", nil
+  puts "✨ Hello from shiny-rocks #{Shiny::Rocks::VERSION}! ✨"
+when "greet"
+  name = ARGV.shift
+  if name.nil? || name.strip.empty?
+    warn "Usage: shiny-rocks greet NAME"
+    exit 1
+  end
+  puts "👋 Hello, #{name}! (from shiny-rocks #{Shiny::Rocks::VERSION})"
+when "info"
+  ruby_ver   = RUBY_VERSION
+  ruby_plat  = RUBY_PLATFORM
+  gem_name   = "shiny-rocks"
+  gem_ver    = Shiny::Rocks::VERSION
+  host       = "https://gembro.live"
+
+  puts "#{gem_name} #{gem_ver}"
+  puts "Ruby: #{ruby_ver} (#{ruby_plat})"
+  puts "Host: #{host}"
+else
+  warn "Unknown command: #{cmd}"
+  puts parser
+  exit 1
+end

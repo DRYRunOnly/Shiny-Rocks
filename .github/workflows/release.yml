@@ -1,0 +1,66 @@
+name: Build & Release gem (push to gembro + GitHub Releases)
+
+on:
+  push:
+    tags:
+      - "v*.*.*"   # e.g. v0.1.3
+  workflow_dispatch:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🧰 Check out
+        uses: actions/checkout@v4
+
+      - name: 🧱 Set up Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.2"
+          bundler-cache: false
+
+      - name: 📦 Build gem
+        run: |
+          gem --version
+          ruby -v
+          gem build *.gemspec
+          echo "GEM_FILE=$(ls -1 *.gem | head -n1)" >> $GITHUB_ENV
+          echo "Built: $(ls -1 *.gem | head -n1)"
+
+      - name: 🔍 Sanity check: version tag matches lib/shiny/rocks/version.rb
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME:-manual}"
+          if [[ "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+            TAG_VER="${BASH_REMATCH[1]}"
+            FILE_VER="$(ruby -e 'load "lib/shiny/rocks/version.rb"; puts Shiny::Rocks::VERSION')"
+            if [[ "$TAG_VER" != "$FILE_VER" ]]; then
+              echo "Tag $TAG does not match lib version $FILE_VER" >&2
+              exit 1
+            fi
+            echo "Version OK: tag=$TAG_VER file=$FILE_VER"
+          else
+            echo "No semver tag; continuing (manual run)."
+          fi
+
+      - name: ⬆️ Push to gembro.live (Geminabox)
+        env:
+          GEMBRO_USER: ${{ secrets.GEMBRO_USER }}
+          GEMBRO_PASS: ${{ secrets.GEMBRO_PASS }}
+        run: |
+          if [[ -z "$GEMBRO_USER" || -z "$GEMBRO_PASS" ]]; then
+            echo "Missing secrets GEMBRO_USER/GEMBRO_PASS" >&2
+            exit 1
+          fi
+          # Use gem push against Geminabox (supports RubyGems push API)
+          gem push "$GEM_FILE" --host "https://${GEMBRO_USER}:${GEMBRO_PASS}@gembro.live/"
+
+      - name: 🏷️ Create GitHub Release (attach .gem)
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ env.GEM_FILE }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
