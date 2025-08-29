@@ -32,7 +32,7 @@ Package management is not unique to Ruby. Some popular ecosystems include:
 - **Maven** for Java
 - **NuGet** for .NET
 
-Each ecosystem has its own package managers and repositories tailored to their languages and workflows.
+Each ecosystem has its own package manager and repositories tailored to their languages and workflows. Even your computer's operating system has a package manager - Brew for MacOS and Chocolatey for Windows!
 
 ### Package Manager vs Repository
 
