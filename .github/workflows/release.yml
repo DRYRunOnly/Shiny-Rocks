@@ -23,6 +23,10 @@ jobs:
           ruby-version: "3.2"
           bundler-cache: false
 
+      - name: "🧩 Install geminabox client"
+        run: |
+          gem install geminabox rubygems-generate_index --no-document
+
       - name: "📦 Build gem"
         run: |
           gem --version
@@ -31,21 +35,30 @@ jobs:
           echo "GEM_FILE=$(ls -1 *.gem | head -n1)" >> $GITHUB_ENV
           echo "Built: $(ls -1 *.gem | head -n1)"
 
+      - name: "🧮 Read version from lib"
+        id: ver
+        shell: bash
+        run: |
+          FILE_VER=$(ruby -e 'load "lib/shiny/rocks/version.rb"; puts Shiny::Rocks::VERSION')
+          echo "ver=$FILE_VER" >> "$GITHUB_OUTPUT"
+          echo "File version: $FILE_VER"
+
       - name: "🔍 Sanity check: version tag matches lib/shiny/rocks/version.rb"
         shell: bash
         run: |
-          TAG="${GITHUB_REF_NAME:-manual}"
-          if [[ "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
+          TAG="${GITHUB_REF_NAME:-}"
+          if [[ -n "$TAG" && "$TAG" =~ ^v([0-9]+\.[0-9]+\.[0-9]+)$ ]]; then
             TAG_VER="${BASH_REMATCH[1]}"
-            FILE_VER="$(ruby -e 'load "lib/shiny/rocks/version.rb"; puts Shiny::Rocks::VERSION')"
+            FILE_VER="${{ steps.ver.outputs.ver }}"
             if [[ "$TAG_VER" != "$FILE_VER" ]]; then
               echo "Tag $TAG does not match lib version $FILE_VER" >&2
               exit 1
             fi
             echo "Version OK: tag=$TAG_VER file=$FILE_VER"
           else
-            echo "No semver tag; continuing (manual run)."
+            echo "No semver tag detected; continuing (manual run)."
           fi
+
 
       - name: "⬆️ Push to gembro.live (Geminabox)"
         env:
@@ -56,11 +69,22 @@ jobs:
             echo "Missing secrets GEMBRO_USER/GEMBRO_PASS" >&2
             exit 1
           fi
-          # Use gem push against Geminabox (supports RubyGems push API)
-          gem push "$GEM_FILE" --host "https://${GEMBRO_USER}:${GEMBRO_PASS}@gembro.live/"
+
+          # URL-encode the password (handles #, @, %, etc.)
+          enc_pass=$(python3 -c "import urllib.parse, os; print(urllib.parse.quote(os.environ['GEMBRO_PASS']))")
+
+          # Push gem using geminabox client with inline user:pass in URL
+          gem inabox "$GEM_FILE" \
+            -g "https://${GEMBRO_USER}:${enc_pass}@gembro.live/"
 
       - name: "🏷️ Create GitHub Release (attach .gem)"
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
-          files: shiny-rocks-*.gem
+          files: ${{ env.GEM_FILE }}
           token: ${{ github.token }}
+          # If we're on a tag push, github.ref_name is like v0.1.0.
+          # If we're on a manual run, create a tag from the file version.
+          tag_name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.ver.outputs.ver) }}
+          target_commitish: ${{ github.sha }}
+          name: ${{ github.ref_type == 'tag' && github.ref_name || format('v{0}', steps.ver.outputs.ver) }}
+          generate_release_notes: true
