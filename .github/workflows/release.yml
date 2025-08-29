@@ -14,16 +14,16 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: 🧰 Check out
+      - name: "🧰 Check out"
         uses: actions/checkout@v4
 
-      - name: 🧱 Set up Ruby
+      - name: "🧱 Set up Ruby"
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.2"
           bundler-cache: false
 
-      - name: 📦 Build gem
+      - name: "📦 Build gem"
         run: |
           gem --version
           ruby -v
@@ -31,7 +31,7 @@ jobs:
           echo "GEM_FILE=$(ls -1 *.gem | head -n1)" >> $GITHUB_ENV
           echo "Built: $(ls -1 *.gem | head -n1)"
 
-      - name: 🔍 Sanity check: version tag matches lib/shiny/rocks/version.rb
+      - name: "🔍 Sanity check: version tag matches lib/shiny/rocks/version.rb"
         shell: bash
         run: |
           TAG="${GITHUB_REF_NAME:-manual}"
@@ -47,7 +47,7 @@ jobs:
             echo "No semver tag; continuing (manual run)."
           fi
 
-      - name: ⬆️ Push to gembro.live (Geminabox)
+      - name: "⬆️ Push to gembro.live (Geminabox)"
         env:
           GEMBRO_USER: ${{ secrets.GEMBRO_USER }}
           GEMBRO_PASS: ${{ secrets.GEMBRO_PASS }}
@@ -59,7 +59,7 @@ jobs:
           # Use gem push against Geminabox (supports RubyGems push API)
           gem push "$GEM_FILE" --host "https://${GEMBRO_USER}:${GEMBRO_PASS}@gembro.live/"
 
-      - name: 🏷️ Create GitHub Release (attach .gem)
+      - name: "🏷️ Create GitHub Release (attach .gem)"
         uses: softprops/action-gh-release@v1
         with:
           files: shiny-rocks-*.gem
