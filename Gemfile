@@ -7,3 +7,5 @@ gemspec
 
 gem "irb"
 gem "rake", "~> 13.0"
+gem "uri", "1.0.2"
+gem "cgi", "0.4.1"
