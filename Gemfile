@@ -5,7 +5,7 @@ source "https://SVC_SLUG:SVC-API-KEY@dl.cloudsmith.io/basic/dryrunonly/group2-YO
 # Specify your gem's dependencies in shiny-rocks.gemspec
 gemspec
 
-gem "irb"
-gem "rake", "~> 13.0"
+gem "irb", "~> 1.15.2"
+gem "rake", "~> 13.0.6"
 gem "uri", "1.0.2"
 gem "cgi", "0.4.1"
