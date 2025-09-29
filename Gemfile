@@ -8,5 +8,4 @@ gemspec
 gem "irb", "1.15.2"
 gem "rake", "13.0.6"
 gem "uri", "1.0.2"
-gem "cgi", "0.4.1"
-gem "rexml", "3.3.8"
+gem "rexml", "3.4.1"
